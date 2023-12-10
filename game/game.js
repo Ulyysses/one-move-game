@@ -1,37 +1,74 @@
+const SecurityFunctions = require("./security");
+const { getResult, resultUserMap } = require("./winning");
+const readline = require("readline");
+const openTable = require("./table");
+
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout,
+});
+
+const securityFunctions = new SecurityFunctions();
+
 const game = (array) => {
-  const readline = require("readline");
-
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-  });
-
   let movesInfo = "Available moves:\n";
-  let indexArr = [];
+
+  const indexArr = [];
+  const posibleMoves = [];
 
   array.forEach((item, index) => {
     movesInfo += `${index + 1} - ${item}\n`;
     indexArr.push(`${index + 1}`);
+    posibleMoves.push(`${index + 1}`);
   });
+
   movesInfo += "0 - exit\n? - help";
-  console.log(movesInfo);
 
   indexArr.push("0", "?");
 
-  rl.question("Enter your move: ", (userMove) => {
-    if (indexArr.includes(userMove)) {
-      console.log(`Your move: ${userMove}`);
-      const computerMove = "1";
-      console.log(`Computer move: ${computerMove}`);
-      console.log("You win!");
-    } else {
-      console.log(
-        "Invalid choice."
-      );
-    }
+  const getComputerMove = () => {
+    const randomIndex = Math.floor(Math.random() * posibleMoves.length);
+    return posibleMoves[randomIndex];
+  };
+  const computerMove = getComputerMove();
 
-    rl.close();
-  });
+  const key = securityFunctions.generateRandomKey();
+  const hmac = securityFunctions.generateHmac(computerMove, key);
+
+  console.log("HMAC:", hmac);
+
+  console.log(movesInfo);
+
+  const makeGame = () => {
+    rl.question("Enter your move: ", (userMove) => {
+      if (userMove === "0") {
+        rl.close();
+        process.exit();
+      }
+
+      if (userMove === "?") {
+        openTable(posibleMoves);
+        process.exit();
+      }
+
+      if (indexArr.includes(userMove)) {
+        console.log(`Your move: ${userMove}`);
+        console.log(`Computer move: ${computerMove}`);
+        console.log(
+          resultUserMap[getResult(posibleMoves, userMove, computerMove)]
+        );
+        console.log("HMAC key:", key);
+        process.exit();
+      } else {
+        console.log(
+          "Unfortunately, there is no such move in the game, please review the available options again."
+        );
+        console.log(movesInfo);
+        makeGame();
+      }
+    });
+  };
+  makeGame();
 };
 
 game([...process.argv.slice(2)]);
