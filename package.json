@@ -1,0 +1,12 @@
+{
+  "name": "one-move-game",
+  "version": "1.0.0",
+  "main": "index.js",
+  "dependencies": {
+    "cli-table": "^0.3.11",
+    "cli-table3": "^0.6.3"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
