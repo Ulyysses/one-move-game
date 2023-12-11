@@ -1,74 +1,79 @@
-const SecurityFunctions = require("./security");
-const { getResult, resultUserMap } = require("./winning");
 const readline = require("readline");
-const openTable = require("./table");
+const SecurityFunctions = require("../helpers/security");
+const { GameResult, resultUserMap } = require("../helpers/getting-result");
+const HelpTable = require("../helpers/table");
+const GameInfo = require("./info");
 
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout,
-});
+class Game {
+  constructor(moves, exitOption, helpOption) {
+    this.movesInfo = new GameInfo(moves, exitOption, helpOption);
+    this.exitOption = exitOption;
+    this.helpOption = helpOption;
+    this.rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout,
+    });
+    this.possibleMoves = this.movesInfo.generateMovesInfo().possibleMoves;
+    this.computerMove = this.getComputerMove();
+    this.securityFunctions = new SecurityFunctions();
+    this.key = this.securityFunctions.generateRandomKey();
+    this.hmac = this.securityFunctions.generateHmac(
+      this.computerMove,
+      this.key
+    );
+  }
 
-const securityFunctions = new SecurityFunctions();
+  getComputerMove() {
+    const possibleComputerMoves = this.possibleMoves.slice(0, -2);
+    const randomIndex = Math.floor(
+      Math.random() * possibleComputerMoves.length
+    );
+    return possibleComputerMoves[randomIndex];
+  }
 
-const game = (array) => {
-  let movesInfo = "Available moves:\n";
-
-  const indexArr = [];
-  const posibleMoves = [];
-
-  array.forEach((item, index) => {
-    movesInfo += `${index + 1} - ${item}\n`;
-    indexArr.push(`${index + 1}`);
-    posibleMoves.push(`${index + 1}`);
-  });
-
-  movesInfo += "0 - exit\n? - help";
-
-  indexArr.push("0", "?");
-
-  const getComputerMove = () => {
-    const randomIndex = Math.floor(Math.random() * posibleMoves.length);
-    return posibleMoves[randomIndex];
-  };
-  const computerMove = getComputerMove();
-
-  const key = securityFunctions.generateRandomKey();
-  const hmac = securityFunctions.generateHmac(computerMove, key);
-
-  console.log("HMAC:", hmac);
-
-  console.log(movesInfo);
-
-  const makeGame = () => {
-    rl.question("Enter your move: ", (userMove) => {
-      if (userMove === "0") {
-        rl.close();
+  makeGame() {
+    this.rl.question("Enter your move: ", (userMove) => {
+      if (userMove === this.exitOption) {
+        this.rl.close();
         process.exit();
       }
 
-      if (userMove === "?") {
-        openTable(posibleMoves);
+      if (userMove === this.helpOption) {
+        new HelpTable(this.possibleMoves.slice(0, -2)).buildTable();
         process.exit();
       }
 
-      if (indexArr.includes(userMove)) {
+      if (this.possibleMoves.includes(userMove)) {
         console.log(`Your move: ${userMove}`);
-        console.log(`Computer move: ${computerMove}`);
-        console.log(
-          resultUserMap[getResult(posibleMoves, userMove, computerMove)]
-        );
-        console.log("HMAC key:", key);
+        console.log(`Computer move: ${this.computerMove}`);
+        const result = new GameResult(
+          this.possibleMoves,
+          userMove,
+          this.computerMove
+        ).getResult();
+        console.log(resultUserMap[result]);
+        console.log("HMAC key:", this.key);
         process.exit();
       } else {
         console.log(
           "Unfortunately, there is no such move in the game, please review the available options again."
         );
-        console.log(movesInfo);
-        makeGame();
+        console.log(this.movesInfo.generateMovesInfo().movesInfo);
+        this.makeGame();
       }
     });
-  };
-  makeGame();
-};
+  }
 
-game([...process.argv.slice(2)]);
+  startGame() {
+    console.log("HMAC:", this.hmac);
+    console.log(this.movesInfo.generateMovesInfo().movesInfo);
+    this.makeGame();
+  }
+}
+
+module.exports = Game;
+
+const exitOption = "0";
+const helpOption = "?";
+const moves = process.argv.slice(2);
+new Game(moves, exitOption, helpOption).startGame();
