@@ -5,6 +5,10 @@ const helpOption = "?";
 const moves = process.argv.slice(2);
 
 const validationRules = {
+  notEnoughMoves: {
+    condition: moves.length < 3,
+    message: "The game must contain at least 3 possible moves",
+  },
   evenMoves: {
     condition: moves.length % 2 === 0,
     message: "The game must contain an odd number of moves",
@@ -12,11 +16,7 @@ const validationRules = {
   repeatingMoves: {
     condition: new Set(moves).size !== moves.length,
     message: "The game must contain different options for moves",
-  },
-  notEnoughMoves: {
-    condition: moves.length <= 1,
-    message: "The game must contain at least 3 possible moves",
-  },
+  }
 };
 
 const isInvalidGame = () => {
