@@ -3,7 +3,6 @@ const SecurityFunctions = require("../helpers/security");
 const { GameResult, resultUserMap } = require("../helpers/getting-result");
 const HelpTable = require("../helpers/table");
 const GameInfo = require("./info");
-
 class Game {
   constructor(moves, exitOption, helpOption) {
     this.movesInfo = new GameInfo(moves, exitOption, helpOption);
