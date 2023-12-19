@@ -4,16 +4,33 @@ const exitOption = "0";
 const helpOption = "?";
 const moves = process.argv.slice(2);
 
-const isValidGame = (moves) =>
-  moves.length > 1 &&
-  moves.length % 2 !== 0 &&
-  new Set(moves).size === moves.length;
+const validationRules = {
+  evenMoves: {
+    condition: moves.length % 2 === 0,
+    message: "The game must contain an odd number of moves",
+  },
+  repeatingMoves: {
+    condition: new Set(moves).size !== moves.length,
+    message: "The game must contain different options for moves",
+  },
+  notEnoughMoves: {
+    condition: moves.length <= 1,
+    message: "The game must contain at least 3 possible moves",
+  },
+};
 
-const startGame = (moves, exitOption, helpOption) =>
-  new Game(moves, exitOption, helpOption).startGame();
+const isInvalidGame = () => {
+  for (const rule of Object.values(validationRules)) {
+    if (rule.condition) {
+      console.log(rule.message);
+    }
+  }
+};
 
-isValidGame(moves)
-  ? startGame(moves, exitOption, helpOption)
-  : console.log(
-      "Invalid game configuration. Please review your input. Ensure that the game includes a minimum of three distinct move options, and the total number of moves must be an odd number."
-    );
+const isValidGame = Object.values(validationRules).every(
+  (rule) => !rule.condition
+);
+
+isValidGame
+  ? new Game(moves, exitOption, helpOption).startGame()
+  : isInvalidGame();
